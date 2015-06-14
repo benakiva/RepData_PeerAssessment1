@@ -1,18 +1,27 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-author: "Isaac Ben-Akiva"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
+Isaac Ben-Akiva  
 
 
 ## Loading and preprocessing the data
 
-```{r}
+
+```r
 activity_data <- read.csv("activity.csv", header = TRUE, sep = ",")
 summary(activity_data)
+```
 
+```
+##      steps                date          interval     
+##  Min.   :  0.00   2012-10-01:  288   Min.   :   0.0  
+##  1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8  
+##  Median :  0.00   2012-10-03:  288   Median :1177.5  
+##  Mean   : 37.38   2012-10-04:  288   Mean   :1177.5  
+##  3rd Qu.: 12.00   2012-10-05:  288   3rd Qu.:1766.2  
+##  Max.   :806.00   2012-10-06:  288   Max.   :2355.0  
+##  NA's   :2304     (Other)   :15840
+```
+
+```r
 activity_data$date <- as.Date(activity_data$date, format="%Y-%m-%d")
 activity_data$interval <- factor(activity_data$interval)
 ```
@@ -20,27 +29,41 @@ activity_data$interval <- factor(activity_data$interval)
 ## What is mean total number of steps taken per day?
 
 1. Calculate the total number of steps taken per day
-```{r}
+
+```r
 num_steps <- tapply(activity_data$steps, activity_data$date, sum, na.rm = TRUE)
 ```
 
 2. Make a histogram of the total number of steps taken each day
-```{r}
+
+```r
 hist(num_steps, breaks = 20, main = "Total Number of Steps per Day", xlab = 'Total Number of Steps', col = 'blue')
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
 
 3. Calculate and report the mean and median of the total number of steps taken per day
 
 Mean of Total Number of Steps per Day
 
-```{r echo=TRUE}
+
+```r
 mean(num_steps)
+```
+
+```
+## [1] 9354.23
 ```
 
 Median of Total Number of Steps per Day
 
-```{r}
+
+```r
 median(num_steps)
+```
+
+```
+## [1] 10395
 ```
 
 
@@ -48,23 +71,37 @@ median(num_steps)
 
 Make a time series plot
 
-```{r}
+
+```r
 steps_interval <- aggregate(steps~interval, data=activity_data, FUN=mean, na.action = na.omit)
 
 with(steps_interval, { plot(interval, steps, type = "l", main="Time-Series of Average Steps/Interval", xlab="5 minute Interval",ylab="Average Steps across all Days")})
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
+
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
-```{r}
+
+```r
 steps_interval$interval[which.max(steps_interval$steps)]
+```
+
+```
+## [1] 835
+## 288 Levels: 0 5 10 15 20 25 30 35 40 45 50 55 100 105 110 115 120 ... 2355
 ```
 
 ## Imputing missing values
 
 Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
 
-```{r}
+
+```r
 nrow(activity_data[!complete.cases(activity_data), ])
+```
+
+```
+## [1] 2304
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
