@@ -6,6 +6,7 @@ Isaac Ben-Akiva
 
 
 ```r
+library(ggplot2)
 activity_data <- read.csv("activity.csv", header = TRUE, sep = ",")
 summary(activity_data)
 ```
@@ -37,7 +38,7 @@ num_steps <- tapply(activity_data$steps, activity_data$date, sum, na.rm = TRUE)
 2. Make a histogram of the total number of steps taken each day
 
 ```r
-hist(num_steps, breaks = 20, main = "Total Number of Steps per Day", xlab = 'Total Number of Steps', col = 'blue')
+hist(num_steps, breaks = 100, main = "Total Number of Steps per Day", xlab = 'Total Number of Steps', col = 'blue')
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
@@ -73,9 +74,15 @@ Make a time series plot
 
 
 ```r
-steps_interval <- aggregate(steps~interval, data=activity_data, FUN=mean, na.action = na.omit)
+steps_interval <- aggregate(activity_data$steps, by = list(activity_data$interval), mean, na.rm=TRUE)
+steps_median <- aggregate(activity_data$steps, by = list(activity_data$interval), median, na.rm=TRUE)
 
-with(steps_interval, { plot(interval, steps, type = "l", main="Time-Series of Average Steps/Interval", xlab="5 minute Interval",ylab="Average Steps across all Days")})
+steps_interval <- cbind(steps_interval[], steps_median$x)
+names(steps_interval) = c("interval","mean.steps", "median.steps")
+steps_interval$mean.steps <- round(steps_interval$mean.steps)
+steps_interval$median.steps <- round(steps_interval$median.steps)
+
+with(steps_interval, { plot(steps_interval$mean.steps, type = "l", main="Time-Series of Average Steps/Interval", xlab="5 minute Interval", ylab="Average Steps across all Days")})
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
@@ -87,7 +94,7 @@ steps_interval$interval[which.max(steps_interval$steps)]
 ```
 
 ```
-## [1] 835
+## factor(0)
 ## 288 Levels: 0 5 10 15 20 25 30 35 40 45 50 55 100 105 110 115 120 ... 2355
 ```
 
@@ -104,4 +111,48 @@ nrow(activity_data[!complete.cases(activity_data), ])
 ## [1] 2304
 ```
 
+#imputing missing step values with mean step at time interval
+
+```r
+nstps <- data.frame(date=activity_data$date[is.na(activity_data$steps)], interval = activity_data$interval[is.na(activity_data$steps)], steps=steps_interval[match(steps_interval$interval, activity_data$interval[is.na(activity_data$steps)]),3])
+
+# remove the NA's from the period
+activity_data <- subset(activity_data, !is.na(steps))
+
+# Append the median steps to the Activity DF
+activity_data <- rbind(activity_data, nstps)
+
+#sum the number of steps each day into the dailysteps2 DF and get the mean and median 
+dailysteps2 <- aggregate(activity_data$steps, by = list(activity_data$date), sum, na.rm=TRUE)
+names(dailysteps2) <- c("Date", "steps")
+
+qplot(steps, data = dailysteps2, geom="histogram", xlab = "Daily Number of Steps", binwidth = 300)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png) 
+
 ## Are there differences in activity patterns between weekdays and weekends?
+
+# Add the Weekday and Weekend identifier
+
+
+```r
+daytype <- function(date) {
+    if (weekdays(as.Date(date)) %in% c("Saturday", "Sunday")) {
+        "weekend"
+    } else {
+        "weekday"
+    }
+}
+
+activity_data$daytype <- as.factor(sapply(activity_data$date, daytype))
+
+par(mfrow = c(2, 1))
+for (type in c("weekend", "weekday")) {
+    steps.type <- aggregate(steps ~ interval, data = activity_data, subset = 
+        activity_data$daytype == type, FUN = mean)
+    plot(steps.type, type = "l", main = type)
+}
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
